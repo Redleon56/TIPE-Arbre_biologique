@@ -153,9 +153,11 @@ class arbre:
             #Fonction récursive permettant de recréer un arbre à partir d'un tableau contenant les bonnes informations.
             #Création d'un dictionnaire pour faciliter la récupération des données.
             dico_aux = {'position' : None,
+                        'tps_vie' : None,
                         'var_degre' : None,
                         'inclinaison' : None,
                         'pourcent_nouvelle_br' : None,
+                        'pourcent_nouvelle_feuille' : None,
                         'nb_max_branche' : None,
                         'energie' : None,
                         'feuilles' : None,
@@ -169,9 +171,11 @@ class arbre:
             #Création de la branche.
             arbre = branche(position_pere = pere,
                             position = (dico_aux['position'][0], dico_aux['position'][1], dico_aux['position'][2]),
+                            tps_vie = dico_aux['tps_vie'],
                             var_degre = dico_aux['var_degre'],
                             inclinaison = dico_aux['inclinaison'],
                             pourcent_nouvelle_br = dico_aux['pourcent_nouvelle_br'],
+                            pourcent_nouvelle_feuille = dico_aux['pourcent_nouvelle_feuille'],
                             nb_max_branche = dico_aux['nb_max_branche'],
                             energie = dico_aux['energie'], 
                             dico_arbre = self.dico_arbre)
@@ -185,6 +189,7 @@ class arbre:
             for i in dico_aux['fils']:
                 arbre.fils.append(self.recreer_arbre(i,(dico_aux['position'][0], dico_aux['position'][1], dico_aux['position'][2])))
 
+            arbre.nb_branche = len(arbre.fils)
             return arbre
 
         #────────────────────────────────
@@ -196,9 +201,6 @@ class arbre:
 
                 with open(emplacement,'r') as fichier:
                     self.arbre = self.recreer_arbre(lecture(ligne(fichier.read())))
-                    
-                    self.axe.clear()
-                    self.axe2.clear()
 
                     self.energie_arb = []
                     self.time = []
@@ -211,11 +213,15 @@ class arbre:
             text = '{'
             text += "position: {};".format(arbre.position)
             text += '\n' + ' '*8*profondeur
+            text += "tps_vie: {};".format(arbre.tps_vie)
+            text += '\n' + ' '*8*profondeur
             text += "var_degre: {};".format(arbre.var_degre)
             text += '\n' + ' '*8*profondeur
             text += "inclinaison: {};".format(arbre.inclinaison)
             text += '\n' + ' '*8*profondeur
             text += "pourcent_nouvelle_br: {};".format(arbre.pourcent_nouvelle_br)
+            text += '\n' + ' '*8*profondeur
+            text += "pourcent_nouvelle_feuille: {};".format(arbre.pourcent_nouvelle_feuille)
             text += '\n' + ' '*8*profondeur
             text += "nb_max_branche: {};".format(arbre.nb_max_branche)
             text += '\n' + ' '*8*profondeur
@@ -303,13 +309,12 @@ class arbre:
         def pousse(self):
             #Fonction qui fait évoluer l'arbre tant qu'il a de l'énergie.
             self.arbre.energie = self.arbre.recup_energie()
-            self.energie_arb.append(self.arbre.energie)
 
             if self.arbre.energie >= 0:
                 self.arbre.distribution(self.arbre.energie)
                 if not(self.dico_arbre['énergie produite par feuille']== 0):
                         self.arbre.decoupe()
-
+            
             if self.arbre.energie <= 0 and not(self.dico_arbre['énergie produite par feuille']== 0):
                 self.decompte += 1
 
@@ -370,11 +375,12 @@ class arbre:
         def affichage(self):
             #Fonction qui gère l'affichage de l'arbre et de son énergie
             self.axe.clear()
+            self.axe2.clear()
 
             self.arbre.affiche_branche(self.axe)
 
-            self.axe2.clear()
-
+            self.energie_arb.append(self.arbre.energie)
+            
             #Sécurité si la liste est vide.
             if self.time == []:
                 self.time = [0]

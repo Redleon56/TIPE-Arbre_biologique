@@ -1,4 +1,7 @@
 from arbre import arbre
 
 #=====================================================
-arbre(seed = None)
+#seed = 1
+seed = None
+
+arbre(seed= seed)

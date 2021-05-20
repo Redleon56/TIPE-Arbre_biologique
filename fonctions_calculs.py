@@ -19,12 +19,7 @@ def limite_r(f,r,centre):
         return(lambda x,y : f(x,y) if ((x-a)**2 + (y-b)**2)**(1/2) <= r else 0)
 
 #──────────────────────────────────────────────
-def couleur_energie(x):
-        if x <= 1: return('black')
-        if x <= 5: return('darkred')
-        if x <= 10: return('firebrick')
-        if x <= 20: return('red')
-        if x <= 40: return('orangered')
-        if x > 40: return('saddlebrown')
+#tangente hyperbolique, de [0, +inf[ -> [0,1]
+def couleur_energie(x): return (np.exp(x)-np.exp(-x))/(np.exp(x)+np.exp(-x))
 
 #=====================================================

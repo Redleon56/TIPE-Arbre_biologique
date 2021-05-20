@@ -25,13 +25,14 @@ class branche:
 		     feuilles = None,
 		     pourcent_nouvelle_feuille = None,
 		     fils = None,
-                     tps_vie = None):
-                
+		     tps_vie = None):
+		
 		self.tps_vie = 0 if tps_vie is None else tps_vie
 		self.position_pere = (0,0,0) if position_pere is None else position_pere
 		self.dico_arbre = data.dico_depart if dico_arbre is None else dico_arbre
 
 		self.fils = [] if fils is None else fils
+		self.premier_branche = self.fils == [] or self.fils[0].tps_vie == 0
 		self.nb_max_branche = rd.randint(self.dico_arbre["nombre minimal de branches générables"],self.dico_arbre["nombre maximal de branches générables"]) if nb_max_branche == None else nb_max_branche
 		self.nb_branche = len(self.fils)
 		
@@ -84,7 +85,10 @@ class branche:
 	#──────────────────────────────────────────────
 	def energie_feuille(self):
 
-		self.energie = self.energie if self.fils == [] else 0
+		self.energie = self.energie if self.premier_branche else 0
+		if self.nb_branche >= 1:
+			self.premier_branche = False
+		
 		self.production = 0
 
 		n = self.nb_branche_au_dessus(self.position)
@@ -117,7 +121,7 @@ class branche:
 		self.tps_vie += 1
 
 		if not(self.bool_feuille):
-			if self.fils == [] and self.energie >= self.dico_arbre["consommation d'énergie pour générer une feuille"] and rd.randint(0,100) < self.pourcent_nouvelle_feuille:
+			if self.fils == [] and self.energie >= self.dico_arbre["consommation d'énergie pour générer une feuille"] and (rd.randint(0,100) < self.pourcent_nouvelle_feuille or self.energie <= 5*min(self.dico_arbre["consommation d'énergie pour générer une feuille"],self.dico_arbre["consommation d'énergie pour vivre par branche"])):
 				self.ajoute_feuille()
 				self.pourcent_nouvelle_feuille -= self.dico_arbre["décroissance pourcent nouvelle feuille"]
 				self.pourcent_nouvelle_feuille = self.pourcent_nouvelle_feuille if self.pourcent_nouvelle_feuille > self.pourcent_feuille else self.pourcent_feuille
@@ -161,11 +165,12 @@ class branche:
 			somme += ajout
 			
 		for fils in self.fils[:-1]:
-			ratio = 1/self.nb_branche if somme == 0 else (fils.production/fils.consommation)/somme
-			fils.distribution(self.energie/(self.dico_arbre["ratio"]+self.dico_arbre["uniforme"]) * (self.dico_arbre["ratio"]*ratio + self.dico_arbre["uniforme"]*1/self.nb_branche))
+			unif = 1/self.nb_branche if not(branche_ajoute) else 1/(self.nb_branche-1)
+			ratio = unif if somme == 0 else ((fils.production/fils.consommation)/somme if fils.consommation != 0 else 0)
+			fils.distribution(self.energie/(self.dico_arbre["ratio"]+self.dico_arbre["uniforme"]) * (self.dico_arbre["ratio"]*ratio + self.dico_arbre["uniforme"]*unif))
 
 		if self.fils != [] and not(branche_ajoute):
-			ratio = 1/self.nb_branche if somme == 0 else (self.fils[-1].production/self.fils[-1].consommation)/somme
+			ratio = 1/self.nb_branche if somme == 0 else ((self.fils[-1].production/self.fils[-1].consommation)/somme if fils.consommation != 0 else 0)
 			self.fils[-1].distribution(self.energie/(self.dico_arbre["ratio"]+self.dico_arbre["uniforme"]) * (self.dico_arbre["ratio"]*ratio + self.dico_arbre["uniforme"]*1/self.nb_branche))
 
 	#──────────────────────────────────────────────
@@ -209,12 +214,12 @@ class branche:
 		x,y,z = self.position
 		xp,yp,zp = self.position_pere
 
-		couleur = couleur_energie(self.energie)
+		alpha = couleur_energie(self.energie)
 
-		graph.plot([x,xp],[y,yp],[z,zp], color = couleur, linestyle = '-', marker = '')
+		graph.plot([x,xp],[y,yp],[z,zp], color = (0.36,0.18,0.,alpha), linestyle = '-', marker = '')
 
 		if not(self.feuilles is None):
-			graph.scatter(x,y,z, marker = '.',edgecolor = 'darkgreen', facecolor = 'green')
+			graph.scatter(x,y,z, marker = '.',edgecolor = (0.,0.37,0.06,alpha), facecolor = (0.,0.5,0.08,alpha))
 
 
 		for fils in self.fils:
@@ -228,7 +233,7 @@ class branche:
 			if i.energie > 0 or (i.energie == 0 and i.tps_vie == 0):
 				liste_traite.append(i)
 				i.decoupe()
-                                
+				
 
 		for j in liste_traite:
 			self.fils.append(j)
